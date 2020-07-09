@@ -1,20 +1,27 @@
 import requests
 from bs4 import BeautifulSoup
 import os
+import threading
 
 
-def sheju_crawl(info, index, download_list):
+glock = threading.Lock()
+
+
+def sheju_crawl(info, index="", download_list=[]):
     header = "https://cjgtu.com"
-    url = header + info[0]  # https://cjgtu.com/luyilu/2019/0723/7372.html
+    url = header + info[0]
 
     if len(index) > 0:
         rindex = url.rindex("/")
         url = url[0:rindex] + "/" + index + ".html"
 
     print("current url ", url)
-    resp = requests.get(url)
+    global resp
+    try:
+        resp = requests.get(url, timeout=120)
+    except Exception as e:
+        print("获取url超时：", e)
     # print(resp.text)
-    # print("-" * 50)
 
     bs = BeautifulSoup(resp.text, "html.parser")
     # print(bs)
@@ -28,7 +35,7 @@ def sheju_crawl(info, index, download_list):
     if len(li_tag_set) > 0:
         li_tag = li_tag_set[0]
         next_page = li_tag.a.get("href")
-        print(next_page)
+        # print(next_page)
 
         if len(next_page) > 0:
             page_index = next_page.split(".")[0]
@@ -60,7 +67,7 @@ def download_images(folder, title, url_list):
     for url in url_list:
         print(url)
         try:
-            result = requests.get(url)
+            result = requests.get(url, timeout=120)
             file_name = title + str(n+1) + ".jpg"
             with open(f"{folder}/{file_name}", "wb") as f:
                 f.write(result.content)
@@ -81,14 +88,17 @@ def get_all_image_set():
         # print(h2_tag)
         link = h2_tag.a.get("href")
         title = h2_tag.a.string
-        # print("-" * 50)
         info_list.append((link, title))
 
     # print(info_list)
     for info in info_list:
         print(info)
-        sheju_crawl(info, "", [])
+        consumer= threading.Thread(target=sheju_crawl, args=(info, ))
+        consumer.start()
+        # sheju_crawl(info_list)
 
 
 get_all_image_set()
-# sheju_crawl("9082", [])
+
+# t = ("/luyilu/2015/1206/1977.html", "mm")
+# sheju_crawl(t)
