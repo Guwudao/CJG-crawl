@@ -4,10 +4,8 @@ import os
 import threading
 from concurrent.futures import ThreadPoolExecutor
 
-exception_image_list, complete_list, threads = [], [], []
-thread_pool = ThreadPoolExecutor(max_workers=25, thread_name_prefix="当前线程数：")
 
-def sheju_crawl(info, index="", download_list=[]):
+def cjg_crawl(info, index="", download_list=[]):
     header = "https://cjgtu.com"
     url = header + info[0]
 
@@ -17,7 +15,7 @@ def sheju_crawl(info, index="", download_list=[]):
 
     # print("current url ", url)
     try:
-        resp = requests.get(url, timeout=180)
+        resp = requests.get(url, timeout=120)
         bs = BeautifulSoup(resp.text, "html.parser")
         # print(bs.find_all("img"))
         link_list = [header + img.get("src") for img in bs.find_all("img")]
@@ -33,7 +31,7 @@ def sheju_crawl(info, index="", download_list=[]):
 
             if len(next_page) > 0:
                 page_index = next_page.split(".")[0]
-                sheju_crawl(info, page_index, temp_list)
+                cjg_crawl(info, page_index, temp_list)
         else:
             origin_title_string = bs.title.string
             if "[" in origin_title_string:
@@ -65,7 +63,7 @@ def download_images(folder, title, url_list):
         file_name = title + str(n + 1) + ".jpg"
         print("%s"%(threading.current_thread().name), folder, "-"* 5, url)
         try:
-            result = requests.get(url, timeout=180)
+            result = requests.get(url, timeout=120)
             with open(f"{folder}/{file_name}", "wb") as f:
                 f.write(result.content)
             n += 1
@@ -78,10 +76,9 @@ def download_images(folder, title, url_list):
     print("——————————————————{} 下载完成——————————————————".format(folder))
 
 
-def get_all_image_set():
+def get_all_image_set(thread):
     html_file = open("./target.html", 'r', encoding='utf-8').read()
     bs = BeautifulSoup(html_file, "html.parser")
-    # print(bs)
 
     info_list = []
     for h2_tag in bs.find_all("h2"):
@@ -90,14 +87,10 @@ def get_all_image_set():
         title = h2_tag.a.string
         info_list.append((link, title))
 
-
     # print(info_list)
     for info in info_list:
         print(info)
-        # consumer= threading.Thread(target=sheju_crawl, args=(info, ))
-        # consumer.start()
-        # threads.append(consumer)
-        thread_pool.map(sheju_crawl, [info])
+        thread.map(cjg_crawl, [info])
 
 
 def exception_download(exception_image_list):
@@ -114,19 +107,18 @@ def exception_download(exception_image_list):
     print("———————————— exception download complete ————————————")
 
 
-get_all_image_set()
-
-# for i in threads:
-#     i.join()
-
-
 # t = ('/luyilu/2018/0207/4643.html', '妄摄娘民国学生装绳艺SM无圣光套图')
-# sheju_crawl(t)
+# cjg_crawl(t)
 
-thread_pool.shutdown(wait=True)
-print("exception_image_list: %s"%(len(exception_image_list)), exception_image_list)
-print("complete_list: ", complete_list)
+if __name__ == '__main__':
 
-exception_download(exception_image_list)
+    exception_image_list, complete_list, threads = [], [], []
+    # thread_pool = ThreadPoolExecutor(max_workers=5, thread_name_prefix="当前线程数_")
 
+    with ThreadPoolExecutor(max_workers=5, thread_name_prefix="当前线程_") as t:
+        get_all_image_set(t)
 
+    print("exception_image_list: %s" % (len(exception_image_list)), exception_image_list)
+    print("complete_list: ", complete_list)
+
+    exception_download(exception_image_list)
