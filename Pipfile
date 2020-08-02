@@ -9,6 +9,7 @@ verify_ssl = true
 bs4 = "*"
 request = "*"
 requests = "*"
+tqdm = "*"
 
 [requires]
 python_version = "3.7"

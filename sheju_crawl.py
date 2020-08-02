@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import os
 import threading
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 def cjg_crawl(info, index="", download_list=[]):
@@ -59,6 +59,7 @@ def download_images(folder, title, url_list):
         os.mkdir(folder)
 
     n = 0
+
     for url in url_list:
         file_name = title + str(n + 1) + ".jpg"
         print("%s"%(threading.current_thread().name), folder, "-"* 5, url)
@@ -76,7 +77,7 @@ def download_images(folder, title, url_list):
     print("——————————————————{} 下载完成——————————————————".format(folder))
 
 
-def get_all_image_set(thread):
+def get_all_image_set(pool):
     html_file = open("./target.html", 'r', encoding='utf-8').read()
     bs = BeautifulSoup(html_file, "html.parser")
 
@@ -89,11 +90,16 @@ def get_all_image_set(thread):
 
     # print(info_list)
     for info in info_list:
-        print(info)
-        thread.map(cjg_crawl, [info])
+        # print(info)
+        future = pool.map(cjg_crawl, [info])
+        futures.append(future)
+
+
+    print(f"map futures: {futures}")
 
 
 def exception_download(exception_image_list):
+    print("———————————— exception download begin ————————————")
     if len(exception_image_list) <= 0:
         return
 
@@ -107,18 +113,21 @@ def exception_download(exception_image_list):
     print("———————————— exception download complete ————————————")
 
 
-# t = ('/luyilu/2018/0207/4643.html', '妄摄娘民国学生装绳艺SM无圣光套图')
-# cjg_crawl(t)
-
 if __name__ == '__main__':
 
-    exception_image_list, complete_list, threads = [], [], []
-    # thread_pool = ThreadPoolExecutor(max_workers=5, thread_name_prefix="当前线程数_")
+    exception_image_list, complete_list, futures = [], [], []
 
-    with ThreadPoolExecutor(max_workers=5, thread_name_prefix="当前线程_") as t:
-        get_all_image_set(t)
+    with ThreadPoolExecutor(max_workers=10, thread_name_prefix="当前线程_") as pool:
+        get_all_image_set(pool)
 
-    print("exception_image_list: %s" % (len(exception_image_list)), exception_image_list)
+
+    # t = ('/luyilu/2020/0725/9127_2.html', '某群美胸比赛无圣光套图[58P]')
+    # cjg_crawl(t)
+
+    print("exception_image_list: %s 张未下载完成" % (len(exception_image_list)), exception_image_list)
     print("complete_list: ", complete_list)
 
-    exception_download(exception_image_list)
+    if len(exception_image_list) > 0:
+        exception_download(exception_image_list)
+    else:
+        print("——————————————————下载任务完成——————————————————")
