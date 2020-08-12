@@ -125,11 +125,10 @@ if __name__ == '__main__':
         with open("target.html", "w") as f:
             f.write(content)
 
-        time.sleep(3)
         driver.quit()
         print("———————————— 搜索内容加载完毕 ————————————")
     except Exception as e:
-        print("谷歌浏览器驱动错误，请手动往target.html导入搜索结果")
+        print("谷歌浏览器驱动错误，请手动往target.html导入搜索结果。", e)
 
     exception_image_list, complete_list = [], []
 
