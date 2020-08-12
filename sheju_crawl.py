@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import os
 import threading
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 
 
 def cjg_crawl(info, index="", download_list=[]):
