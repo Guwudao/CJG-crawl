@@ -91,10 +91,7 @@ def get_all_image_set(pool):
     # print(info_list)
     for info in info_list:
         # print(info)
-        future = pool.map(cjg_crawl, [info])
-        futures.append(future)
-
-    # print(f"map futures: {futures}")
+        pool.map(cjg_crawl, [info])
 
 
 def exception_download(exception_image_list):
@@ -114,7 +111,7 @@ def exception_download(exception_image_list):
 
 if __name__ == '__main__':
 
-    exception_image_list, complete_list, futures = [], [], []
+    exception_image_list, complete_list = [], []
 
     with ThreadPoolExecutor(max_workers=15, thread_name_prefix="当前线程_") as pool:
         get_all_image_set(pool)
