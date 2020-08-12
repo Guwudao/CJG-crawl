@@ -137,10 +137,6 @@ if __name__ == '__main__':
         print("———————————— 开始下载 ————————————")
         get_all_image_set(pool)
 
-
-    # t = ('/luyilu/2020/0725/9127_2.html', '某群美胸比赛无圣光套图[58P]')
-    # cjg_crawl(t)
-
     print("exception_image_list: %s 张未下载完成" % (len(exception_image_list)), exception_image_list)
     print("complete_list: ", complete_list)
 
@@ -148,3 +144,7 @@ if __name__ == '__main__':
         exception_download(exception_image_list)
     else:
         print("——————————————————下载任务完成——————————————————")
+
+
+    # t = ('/luyilu/2020/0725/9127_2.html', '某群美胸比赛无圣光套图[58P]')
+    # cjg_crawl(t)
