@@ -3,6 +3,8 @@ from bs4 import BeautifulSoup
 import os
 import threading
 from concurrent.futures import ThreadPoolExecutor
+from selenium import webdriver
+import time
 
 
 def cjg_crawl(info, index="", download_list=[]):
@@ -111,9 +113,28 @@ def exception_download(exception_image_list):
 
 if __name__ == '__main__':
 
+    message = input("请输入搜索内容：")
+
+    try:
+        driver = webdriver.Chrome()
+        driver.get("https://cjgtu.com/index.php?s=sou")
+        driver.find_element_by_class_name("form-control").send_keys(message)
+        driver.find_element_by_class_name("btn").click()
+        content = driver.page_source
+
+        with open("target.html", "w") as f:
+            f.write(content)
+
+        time.sleep(3)
+        driver.quit()
+        print("———————————— 搜索内容加载完毕 ————————————")
+    except Exception as e:
+        print("谷歌浏览器驱动错误，请手动往target.html导入搜索结果")
+
     exception_image_list, complete_list = [], []
 
     with ThreadPoolExecutor(max_workers=15, thread_name_prefix="当前线程_") as pool:
+        print("———————————— 开始下载 ————————————")
         get_all_image_set(pool)
 
 
