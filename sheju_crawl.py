@@ -76,7 +76,7 @@ def download_images(folder, title, url_list):
             print(folder, url, "图片下载异常", e)
 
     complete_list.append(folder)
-    print("——————————————————{} 下载完成——————————————————".format(folder))
+    print(divide_line.format(folder + "下载完成"))
 
 
 def get_all_image_set(pool):
@@ -97,7 +97,7 @@ def get_all_image_set(pool):
 
 
 def exception_download(exception_image_list):
-    print("———————————— exception download begin ————————————")
+    print(divide_line.format("Exception download begin"))
     if len(exception_image_list) <= 0:
         return
 
@@ -108,11 +108,12 @@ def exception_download(exception_image_list):
                 f.write(result.content)
         except Exception as e:
             print("Exception download 异常信息：", e, image)
-    print("———————————— exception download complete ————————————")
+    print(divide_line.format("Exception download complete"))
 
 
 if __name__ == '__main__':
 
+    divide_line = "———————————— {} ————————————"
     message = input("请输入搜索内容：")
 
     try:
@@ -126,23 +127,27 @@ if __name__ == '__main__':
             f.write(content)
 
         driver.quit()
-        print("———————————— 搜索内容加载完毕 ————————————")
+        print(f"{divide_line} 搜索内容加载完毕 {divide_line}")
     except Exception as e:
         print("谷歌浏览器驱动错误，请手动往target.html导入搜索结果。", e)
 
     exception_image_list, complete_list = [], []
 
     with ThreadPoolExecutor(max_workers=15, thread_name_prefix="当前线程_") as pool:
-        print("———————————— 开始下载 ————————————")
+        print(divide_line.format("开始下载"))
         get_all_image_set(pool)
 
-    print("exception_image_list: %s 张未下载完成" % (len(exception_image_list)), exception_image_list)
-    print("complete_list: ", complete_list)
+    if len(complete_list) > 0:
+        print(divide_line.format("下载异常，请检查target.html文件内容"))
+        exit(1)
+    else:
+        print("complete_list: ", complete_list)
 
     if len(exception_image_list) > 0:
+        print("exception_image_list: %s 张未下载完成" % (len(exception_image_list)), exception_image_list)
         exception_download(exception_image_list)
     else:
-        print("——————————————————下载任务完成——————————————————")
+        print(divide_line.format("下载任务完成"))
 
 
     # t = ('/luyilu/2020/0725/9127_2.html', '某群美胸比赛无圣光套图[58P]')
