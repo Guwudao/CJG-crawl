@@ -63,7 +63,7 @@ def download_images(folder, title, url_list):
     n = 0
     for url in url_list:
         file_name = title + str(n + 1) + ".jpg"
-        print("%s" % (threading.current_thread().name), folder, "-"* 5, url)
+        print("%s" % threading.current_thread().name, folder, "-" * 5, url)
 
         try:
             result = requests.get(url, timeout=120, verify=False)
@@ -155,10 +155,12 @@ if __name__ == '__main__':
 
     exception_image_list, complete_list = [], []
     divide_line = "———————————— {} ————————————"
+
     message = input("请输入搜索内容：")
+    threads = int(input("请输入线程数："))
     auto_search(message)
 
-    with ThreadPoolExecutor(max_workers=15, thread_name_prefix="当前线程_") as thread_pool:
+    with ThreadPoolExecutor(max_workers=threads, thread_name_prefix="当前线程_") as thread_pool:
         print(divide_line.format("开始下载"))
         get_all_image_set(thread_pool)
 
