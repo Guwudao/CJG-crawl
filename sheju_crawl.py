@@ -4,6 +4,7 @@ import os
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from selenium import webdriver
+from selenium.common import exceptions
 
 
 def cjg_crawl(info, index="", download_list=[]):
@@ -16,7 +17,7 @@ def cjg_crawl(info, index="", download_list=[]):
 
     # print("current url ", url)
     try:
-        resp = requests.get(url, timeout=120)
+        resp = requests.get(url, timeout=120, verify=False)
         bs = BeautifulSoup(resp.text, "html.parser")
         # print(bs.find_all("img"))
         link_list = [header + img.get("src") for img in bs.find_all("img")]
@@ -65,7 +66,7 @@ def download_images(folder, title, url_list):
         print("%s" % (threading.current_thread().name), folder, "-"* 5, url)
 
         try:
-            result = requests.get(url, timeout=120)
+            result = requests.get(url, timeout=120, verify=False)
             with open(f"{folder}/{file_name}", "wb") as image_f:
                 image_f.write(result.content)
             n += 1
@@ -79,19 +80,22 @@ def download_images(folder, title, url_list):
 
 
 def get_all_image_set(pool):
-    html_file = open("./target.html", 'r', encoding='utf-8').read()
-    bs = BeautifulSoup(html_file, "html.parser")
-
     info_list = []
-    for h2_tag in bs.find_all("h2"):
-        link = h2_tag.a.get("href")
-        title = h2_tag.a.string
-        info_list.append((link, title))
+    try:
+        html_file = open("./target.html", 'r', encoding='utf-8').read()
+        bs = BeautifulSoup(html_file, "html.parser")
 
-    # print(info_list)
-    for info in info_list:
-        # print(info)
-        pool.map(cjg_crawl, [info])
+        for h2_tag in bs.find_all("h2"):
+            link = h2_tag.a.get("href")
+            title = h2_tag.a.string
+            info_list.append((link, title))
+    except Exception as parse_error:
+        print("target.html解析错误：", parse_error)
+    else:
+        # print(info_list)
+        for info in info_list:
+            # print(info)
+            pool.map(cjg_crawl, [info])
 
 
 def exception_download(exception_list):
@@ -101,7 +105,7 @@ def exception_download(exception_list):
 
     for image in exception_list:
         try:
-            result = requests.get(image[1], timeout=180)
+            result = requests.get(image[1], timeout=180, verify=False)
             with open("./%s/%s" % (image[0], image[2]), "wb") as exception_f:
                 exception_f.write(result.content)
         except Exception as exception_error:
@@ -109,37 +113,36 @@ def exception_download(exception_list):
     print(divide_line.format("Exception download complete"))
 
 
-if __name__ == '__main__':
-
-    divide_line = "———————————— {} ————————————"
-    message = input("请输入搜索内容：")
-
+def auto_search(msg):
     try:
         driver = webdriver.Chrome()
         driver.get("https://cjgtu.com/index.php?s=sou")
-        driver.find_element_by_class_name("form-control").send_keys(message)
+        driver.find_element_by_class_name("form-control").send_keys(msg)
         driver.find_element_by_class_name("btn").click()
+        driver.find_element_by_class_name("focus")
         content = driver.page_source
+        # print(content)
 
         with open("target.html", "w") as f:
             f.write(content)
 
-        driver.quit()
-        print(f"{divide_line} 搜索内容加载完毕 {divide_line}")
+        print(divide_line.format("搜索内容加载完毕"))
+    except exceptions.NoSuchElementException as e:
+        print("无搜索结果，请手动往target.htm导入搜索结果html", e)
+    except exceptions.WebDriverException as e:
+        print("浏览器驱动错误，请手动往target.html导入搜索结果html。", e)
     except Exception as e:
-        print("谷歌浏览器驱动错误，请手动往target.html导入搜索结果。", e)
+        print("错误：", e)
+    finally:
+        driver.quit()
 
-    exception_image_list, complete_list = [], []
 
-    with ThreadPoolExecutor(max_workers=15, thread_name_prefix="当前线程_") as thread_pool:
-        print(divide_line.format("开始下载"))
-        get_all_image_set(thread_pool)
-
-    if len(complete_list) > 0:
+def result_handle():
+    if len(complete_list) <= 0:
         print(divide_line.format("下载异常，请检查target.html文件内容"))
         exit(1)
     else:
-        print("complete_list: ", complete_list)
+        print("complete_list: ", complete_list, len(complete_list))
 
     if len(exception_image_list) > 0:
         print("exception_image_list: %s 张未下载完成" % (len(exception_image_list)), exception_image_list)
@@ -147,6 +150,20 @@ if __name__ == '__main__':
     else:
         print(divide_line.format("下载任务完成"))
 
+
+if __name__ == '__main__':
+
+    exception_image_list, complete_list = [], []
+    divide_line = "———————————— {} ————————————"
+    message = input("请输入搜索内容：")
+    auto_search(message)
+
+    with ThreadPoolExecutor(max_workers=15, thread_name_prefix="当前线程_") as thread_pool:
+        print(divide_line.format("开始下载"))
+        get_all_image_set(thread_pool)
+
+    result_handle()
+
     # debug mode
-    # t = ('/luyilu/2020/0725/9127_2.html', '某群美胸比赛无圣光套图[58P]')
+    # t = ('/luyilu/2020/0627/9062.html', '极品福利姬酒Joanna狼&猫无圣光套图[62P]')
     # cjg_crawl(t)
