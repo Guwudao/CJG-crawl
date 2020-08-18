@@ -158,7 +158,7 @@ def result_handle():
 
 
 def download_choose():
-    download_type = input("是否手动下载下载模式[y/n]: ")
+    download_type = input("是否手动导入下载模式[y/n]: ")
 
     if download_type == "y":
         print("请确保target.html已更新")
