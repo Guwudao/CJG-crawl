@@ -1,10 +1,12 @@
 import requests
-from bs4 import BeautifulSoup
 import os
 import threading
+import urllib3
+from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor
 from selenium import webdriver
 from selenium.common import exceptions
+urllib3.disable_warnings()
 
 
 def cjg_crawl(info, index="", download_list=[]):
@@ -93,9 +95,13 @@ def get_all_image_set(pool):
         print("target.html解析错误：", parse_error)
     else:
         # print(info_list)
-        for info in info_list:
-            # print(info)
-            pool.map(cjg_crawl, [info])
+        if len(info_list) > 0:
+            for info in info_list:
+                # print(info)
+                pool.map(cjg_crawl, [info])
+        else:
+            print(divide_line.format("无下载内容，请检查target.html"))
+            return
 
 
 def exception_download(exception_list):
@@ -151,19 +157,33 @@ def result_handle():
         print(divide_line.format("下载任务完成"))
 
 
+def download_choose():
+    download_type = input("是否手动下载下载模式[y/n]: ")
+
+    if download_type == "y":
+        print("请确保target.html已更新")
+        with ThreadPoolExecutor(max_workers=15, thread_name_prefix="当前线程_") as thread_pool:
+            print(divide_line.format("开始下载"))
+            get_all_image_set(thread_pool)
+
+    elif download_type == "n":
+        message = input("请输入搜索内容：")
+        threads = int(input("请输入线程数："))
+        auto_search(message)
+
+        with ThreadPoolExecutor(max_workers=threads, thread_name_prefix="当前线程_") as thread_pool:
+            print(divide_line.format("开始下载"))
+            get_all_image_set(thread_pool)
+    else:
+        print("输入有误，请重新输入！")
+        download_choose()
+
 if __name__ == '__main__':
 
     exception_image_list, complete_list = [], []
     divide_line = "———————————— {} ————————————"
 
-    message = input("请输入搜索内容：")
-    threads = int(input("请输入线程数："))
-    auto_search(message)
-
-    with ThreadPoolExecutor(max_workers=threads, thread_name_prefix="当前线程_") as thread_pool:
-        print(divide_line.format("开始下载"))
-        get_all_image_set(thread_pool)
-
+    download_choose()
     result_handle()
 
     # debug mode
