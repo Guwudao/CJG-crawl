@@ -8,6 +8,8 @@ from selenium import webdriver
 from selenium.common import exceptions
 urllib3.disable_warnings()
 
+divide_line = "———————————— {} ————————————"
+
 
 def cjg_crawl(info, index="", download_list=[]):
     header = "https://cjgtu.com"
@@ -17,7 +19,7 @@ def cjg_crawl(info, index="", download_list=[]):
         rindex = url.rindex("/")
         url = url[0:rindex] + "/" + index + ".html"
 
-    # print("current url ", url)
+    print("current url ", url)
     try:
         resp = requests.get(url, timeout=120, verify=False)
         bs = BeautifulSoup(resp.text, "html.parser")
@@ -31,7 +33,7 @@ def cjg_crawl(info, index="", download_list=[]):
         if len(li_tag_set) > 0:
             li_tag = li_tag_set[0]
             next_page = li_tag.a.get("href")
-            # print(next_page)
+            print(next_page)
 
             if len(next_page) > 0:
                 page_index = next_page.split(".")[0]
@@ -81,7 +83,7 @@ def download_images(folder, title, url_list):
     print(divide_line.format(folder + "下载完成"))
 
 
-def get_all_image_set(pool):
+def get_all_image_set():
     info_list = []
     try:
         html_file = open("./target.html", 'r', encoding='utf-8').read()
@@ -96,9 +98,12 @@ def get_all_image_set(pool):
     else:
         # print(info_list)
         if len(info_list) > 0:
-            for info in info_list:
-                # print(info)
-                pool.map(cjg_crawl, [info])
+            threads = len(info_list) if len(info_list) < 20 else 20
+            print("threads: ", threads)
+            with ThreadPoolExecutor(max_workers=threads, thread_name_prefix="当前线程_") as thread_pool:
+                for info in info_list:
+                    # print(info)
+                    thread_pool.map(cjg_crawl, [info])
         else:
             print(divide_line.format("无下载内容，请检查target.html"))
             return
@@ -148,7 +153,7 @@ def result_handle():
         print(divide_line.format("下载异常，请检查target.html文件内容"))
         exit(1)
     else:
-        print("complete_list: ", complete_list, len(complete_list))
+        print("complete_list: ", len(complete_list), complete_list)
 
     if len(exception_image_list) > 0:
         print("exception_image_list: %s 张未下载完成" % (len(exception_image_list)), exception_image_list)
@@ -162,30 +167,29 @@ def download_choose():
 
     if download_type == "y":
         print("请确保target.html已更新")
-        with ThreadPoolExecutor(max_workers=15, thread_name_prefix="当前线程_") as thread_pool:
-            print(divide_line.format("开始下载"))
-            get_all_image_set(thread_pool)
+        print(divide_line.format("开始下载"))
+        get_all_image_set()
 
     elif download_type == "n":
         message = input("请输入搜索内容：")
-        threads = int(input("请输入线程数："))
+        while len(message) == 0:
+            message = input("请输入搜索内容：")
         auto_search(message)
 
-        with ThreadPoolExecutor(max_workers=threads, thread_name_prefix="当前线程_") as thread_pool:
-            print(divide_line.format("开始下载"))
-            get_all_image_set(thread_pool)
+        print(divide_line.format("开始下载"))
+        get_all_image_set()
     else:
         print("输入有误，请重新输入！")
         download_choose()
 
+
 if __name__ == '__main__':
 
     exception_image_list, complete_list = [], []
-    divide_line = "———————————— {} ————————————"
 
-    download_choose()
-    result_handle()
+    # download_choose()
+    # result_handle()
 
     # debug mode
-    # t = ('/luyilu/2020/0627/9062.html', '极品福利姬酒Joanna狼&猫无圣光套图[62P]')
-    # cjg_crawl(t)
+    t = ('/xiurenwang/2020/0831/9234.html', '秀人网第1731期杨晨晨sugar大尺度套图[98P]')
+    cjg_crawl(t)
