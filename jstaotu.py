@@ -14,7 +14,6 @@ def get_all_topics():
     response.encoding = "gb2312"
 
     bs = BeautifulSoup(response.text, "html.parser")
-
     all_titles = bs.find_all("div", class_="interestline")
 
     print(response.text)
@@ -34,13 +33,13 @@ def parse_html():
             brand_all_hrefs = brand.find_all("a")
             for href in brand_all_hrefs:
                 # print(href.get("href"), href.string)
-                write_to_file(str(href.string))
-                write_to_file(str(href.get("href")))
-                write_to_file("\n")
+                link_list.append(str(href.string))
+                link_list.append(str(href.get("href")))
+                link_list.append("\n")
 
             # print(brand_all_hrefs)
-            write_to_file("-" * 50)
-            write_to_file("\n")
+            link_list.append("-" * 50)
+            link_list.append("\n")
             print("-" * 50)
 
         # print(type(link_list))
