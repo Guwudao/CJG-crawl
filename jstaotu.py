@@ -48,7 +48,47 @@ def parse_html():
         print("target.html解析错误：", parse_error)
 
 
-def fetch_all_list() -> []:
+def fetch_all_image_in_album():
+    url = "http://www.gqxzt.com/gaoqingr/qingzxie/20211021/111735.html"
+    resp = requests.get(url)
+    resp.encoding = "gb2312"
+    bs = BeautifulSoup(resp.text, "html.parser")
+    all_pages_count = bs.find_all("div", class_="page")[0].find_all("a")
+
+    image_page_list = []
+    url_prefix = url.rsplit("/", 1)[0]
+    for count in all_pages_count:
+        href = count.get("href")
+        link = url_prefix + "/" + href
+        if link not in image_page_list:
+            image_page_list.append(link)
+
+    print(image_page_list)
+    print(bs.find_all("img"))
+
+
+def fetch_all_album_in_page() -> []:
+    url = "http://www.gqxzt.com/gaoqingr/qingzxies/xinyanxiaogongzhu/1.html"
+    resp = requests.get(url)
+    resp.encoding = "gb2312"
+    bs = BeautifulSoup(resp.text, "html.parser")
+
+    album_list = bs.select("#list")[0].find_all("li")
+
+    host = urllib3.get_host(url)[0] + "://" + urllib3.get_host(url)[1]
+    print(f"host: {host}")
+
+    album_info_list = []
+    for album in album_list:
+        title = album.a.get("title")
+        link = host + album.a.get("href")
+        album_info_list.append((title, link))
+
+    print(album_info_list)
+    return album_info_list
+
+
+def fetch_all_list_for_special_topic() -> []:
     url = "http://www.gqxzt.com/gaoqingr/qingzxies/xinyanxiaogongzhu/1.html"
     resp = requests.get(url)
     resp.encoding = "gb2312"
@@ -70,13 +110,7 @@ def fetch_all_list() -> []:
     return page_list
 
 
-def write_to_file(href):
-    file_list = []
-    file_list.append(href)
-
-    with open("jstaotu.txt", "a+") as f:
-        f.writelines(file_list)
-
-
 if __name__ == '__main__':
-    fetch_all_list()
+    # fetch_all_list_for_special_topic()
+    # fetch_all_album_in_page()
+    fetch_all_image_in_album()
